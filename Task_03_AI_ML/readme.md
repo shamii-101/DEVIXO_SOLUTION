@@ -6,7 +6,7 @@ This project focuses on predicting whether a customer is likely to **churn (leav
 
 A Customer Churn Prediction system can help businesses identify customers who may leave and take preventive actions to improve customer retention.
 
-The project implements multiple machine learning classification models and compares their performance using different evaluation metrics. It also includes cross-validation, hyperparameter tuning, feature importance analysis, and model saving using Joblib.
+The project implements multiple machine learning classification models and compares their performance using different evaluation metrics. It also includes cross-validation, hyperparameter tuning, feature importance analysis, confusion matrices, and model saving using Joblib.
 
 ---
 
@@ -15,7 +15,7 @@ The project implements multiple machine learning classification models and compa
 - Prepare and clean the customer churn dataset.
 - Perform feature engineering and feature selection.
 - Encode categorical variables.
-- Scale numerical features.
+- Scale feature values.
 - Train multiple machine learning classification models.
 - Evaluate models using Accuracy, Precision, Recall, and F1 Score.
 - Generate confusion matrices.
@@ -24,7 +24,7 @@ The project implements multiple machine learning classification models and compa
 - Analyze feature importance.
 - Compare the performance of different models.
 - Select and save the best-performing model.
-- Load the saved model and verify its prediction performance.
+- Load the saved model and verify its performance.
 
 ---
 
@@ -49,7 +49,7 @@ The dataset contains customer information such as:
 - Gender
 - Customer Churn status
 
-The dataset satisfies the minimum 3,000-record requirement.
+The dataset satisfies the minimum requirement of 3,000 records.
 
 ---
 
@@ -68,13 +68,10 @@ The following preprocessing steps were performed:
 
 ### Feature Engineering
 
-A new feature called:
+A new feature called `BalanceSalaryRatio` was created to represent the relationship between the customer's balance and estimated salary.
 
-```text
-BalanceSalaryRatio
-
-was created to represent the relationship between the customer's balance and estimated salary.
-
+```python
+X["BalanceSalaryRatio"] = X["Balance"] / (X["EstimatedSalary"] + 1)
 Feature Selection
 
 Irrelevant identifier and unnecessary columns were removed before model training.
@@ -83,7 +80,11 @@ Categorical Encoding
 
 Categorical variables such as Geography and Gender were converted into numerical features using One-Hot Encoding.
 
-pd.get_dummies(X, columns=["Geography", "Gender"], drop_first=True)
+X = pd.get_dummies(
+    X,
+    columns=["Geography", "Gender"],
+    drop_first=True
+)
 
 The final encoded dataset contained:
 
@@ -93,8 +94,12 @@ features.
 
 Feature Scaling
 
-StandardScaler was used to standardize the feature values so that numerical features were placed on a comparable scale.
+StandardScaler was used to standardize the feature values.
 
+from sklearn.preprocessing import StandardScaler
+
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
 Train/Test Split
 
 The dataset was divided into:
@@ -104,6 +109,15 @@ Testing data: 2,000 records
 
 An 80/20 split was used with stratification.
 
+from sklearn.model_selection import train_test_split
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X_scaled,
+    y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y
+)
 🤖 Machine Learning Models
 
 Four machine learning classification models were trained:
@@ -139,21 +153,19 @@ The original Gradient Boosting model achieved the highest F1 Score of 60.63%.
 
 The SVM model achieved the highest Precision of 83.87% among the initial models.
 
-For the final model selection, the Tuned Gradient Boosting Classifier was selected primarily because it achieved the highest test accuracy while also maintaining strong precision.
+For the final model selection, the Tuned Gradient Boosting Classifier was selected primarily because it achieved the highest test accuracy while maintaining strong precision.
 
 🔲 Confusion Matrix
 
 Confusion matrices were generated for all four initial machine learning models to analyze correct and incorrect predictions.
 
-The confusion matrix helps identify:
+A confusion matrix contains:
 
-Correctly predicted customers who stayed
-Incorrectly predicted churn customers
-Missed churn customers
-Correctly detected churn customers
-
-For example, the Gradient Boosting confusion matrix was:
-
+True Negatives (TN)
+False Positives (FP)
+False Negatives (FN)
+True Positives (TP)
+Gradient Boosting Confusion Matrix
 [[1538   55]
  [ 206  201]]
 
@@ -237,15 +249,21 @@ Best CV Accuracy : 86.40%
 
 The trained model was saved using Joblib.
 
+import joblib
+
 joblib.dump(best_model, "models/best_model.joblib")
 
 The saved model was then loaded again and tested successfully.
 
 loaded_model = joblib.load("models/best_model.joblib")
+
+loaded_accuracy = loaded_model.score(X_test, y_test)
+
+print(f"Loaded Model Test Accuracy: {loaded_accuracy:.4f}")
 Loaded Model Test Accuracy
 87.10%
 
-This confirms that the trained model can be reused for predictions without retraining the model.
+This confirms that the trained model can be loaded and reused without retraining.
 
 📁 Project Structure
 Task_03_AI_ML/
@@ -271,7 +289,7 @@ Task_03_AI_ML/
 ▶️ How to Run
 1. Open the Project
 
-Open the project folder in VS Code.
+Open the Task_03_AI_ML folder in VS Code.
 
 2. Install Required Libraries
 
@@ -338,13 +356,3 @@ The final Tuned Gradient Boosting model achieved:
 87.10% test accuracy
 
 The trained model was successfully saved as a .joblib file and loaded again to verify that it can be reused without retraining.
-
-
-### 🔥 Bas ab README mein yehi final version rakho
-
-Aur **ek important check**:
-
-Agar tumne model ko `models` folder mein move kar diya hai, to `main.py` mein bhi ye hona chahiye:
-
-```python
-joblib.dump(best_model, "models/best_model.joblib")
